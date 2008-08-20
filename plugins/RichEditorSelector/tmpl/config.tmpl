@@ -1,0 +1,14 @@
+<div class="field field-left-label pkg">
+    <div class="field-inner">
+        <div class="field-header">
+            <label for="editor_name"><MT_TRANS phrase="Your rich text editor"></label>
+        </div>
+        <div class="field-content">
+            <select id="editor_name" name="editor_name">
+                <mt:loop name="editors">
+                <option value="<mt:var name="key">" <mt:if name="selected"> selected </mt:if>><mt:var name="name"></option>
+                </mt:loop>
+            </select>
+        </div>
+    </div>
+</div>
