@@ -23,6 +23,7 @@ my $plugin = __PACKAGE__->new(
             ['editor_name', { Default => 'archetype'}]
         ]),
         system_config_template => 'config.tmpl',
+        schema_version => 1.1,
     }
 );
 
@@ -30,6 +31,37 @@ MT->add_plugin($plugin);
 MT->add_callback( 'pre_run',  9, $plugin, \&_hdlr_pre_run );
 MT->add_callback( 'cms_post_save.author',  9, $plugin, \&_post_save_author );
 MT->add_callback( 'MT::App::CMS::template_param.edit_author', 9, $plugin, \&_add_field );
+
+sub init_registry {
+    my $mt = shift;
+
+    $mt->registry(
+        {   upgrade_functions => {
+                'upgrade_author_richtext_editor' =>
+                    { code => \&upgrade_author_richtext_editor, },
+            },
+        }
+    );
+
+    return 1;
+}
+
+sub upgrade_author_richtext_editor {
+    my $mt = shift;
+
+    require MT::PluginData;
+    my $iter = MT::PluginData->load_iter(
+        { plugin => $plugin->key }
+    );
+    while ( my $pd = $iter->() ) {
+        my ( $blog_id, $user_id ) = $pd->key =~ /configuration:blog:(\d+):user:(\d+)/;
+        my $new = 'configuration:system:user:'.$user_id;
+        $pd->key($new);
+        $pd->save or die $pd->errstr;
+    }
+
+    return 1;
+}
 
 sub _post_save_author {
     my $eh = shift;
@@ -140,7 +172,7 @@ sub _get_scope {
     return unless $user;
 
     my $user_id = $user->id;
-    return 'configuration:system'.':user:' . $user_id
+    return 'system'.':user:' . $user_id
 }
 
 sub _get_config_value {
